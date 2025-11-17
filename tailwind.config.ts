@@ -83,9 +83,18 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
+        sans: ["Inter", "DM Sans", "var(--font-sans)"],
+        display: ["Space Grotesk", "var(--font-sans)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
+      },
+      letterSpacing: {
+        tighter: "-0.05em",
+        tight: "-0.025em",
+        normal: "0",
+        wide: "0.025em",
+        wider: "0.05em",
+        widest: "0.1em",
       },
       keyframes: {
         "accordion-down": {
