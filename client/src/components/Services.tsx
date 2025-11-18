@@ -7,7 +7,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { FeatureSteps } from "@/components/ui/feature-section";
-
+import { ServicesGrid } from "@/components/ServicesGrid";
 const services = [
   {
     icon: Code,
@@ -95,6 +95,9 @@ export function Services() {
         imageHeight="h-[400px]"
         className="bg-[#050505] text-slate-50 pt-0"
       />
+
+      {/* New modern services grid directly below the FeatureSteps section */}
+      <ServicesGrid />
     </section>
   );
 }
