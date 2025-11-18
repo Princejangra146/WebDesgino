@@ -25,8 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   insertContactSubmissionSchema,
   type InsertContactSubmission,
-} from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
+} from "@/schemas/contact";
 import {
   Mail,
   Phone,
@@ -52,24 +51,27 @@ export function ContactSection() {
     },
   });
 
+  // Fake mutation: keeps loading/success UI but does NOT send anything anywhere
   const mutation = useMutation({
-    mutationFn: (data: InsertContactSubmission) =>
-      apiRequest("POST", "/api/contact", data),
+    mutationFn: async (data: InsertContactSubmission) => {
+      // simulate a short network delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return data;
+    },
     onSuccess: () => {
       setIsSubmitted(true);
       setSubmitError(null);
       toast({
         title: "Message sent successfully!",
-        description: "We'll get back to you within 24 hours.",
+        description:
+          "This is a demo UI only. Your message is not actually being sent anywhere.",
       });
       form.reset();
       setTimeout(() => setIsSubmitted(false), 5000);
     },
-    onError: (error) => {
+    onError: () => {
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to send message. Please try again.";
+        "Something went wrong (demo mode). Please try again or contact us directly.";
       setSubmitError(errorMessage);
       toast({
         title: "Something went wrong",
@@ -137,9 +139,9 @@ export function ContactSection() {
                         <FormLabel className="text-slate-200">Email</FormLabel>
                         <FormControl>
                           <Input
-                            type="email"
                             className="bg-[#020617] border-[#27272f] text-slate-50 placeholder:text-slate-500 focus:border-[#7C3AED] focus:ring-[#7C3AED]/60"
-                            placeholder="your@email.com"
+                            placeholder="you@example.com"
+                            type="email"
                             {...field}
                             data-testid="input-email"
                           />
@@ -163,28 +165,21 @@ export function ContactSection() {
                         >
                           <FormControl>
                             <SelectTrigger
-                              className="bg-[#020617] border-[#27272f] text-slate-50 focus:border-[#7C3AED]"
+                              className="bg-[#020617] border-[#27272f] text-slate-50 focus:border-[#7C3AED] focus:ring-[#7C3AED]/60"
                               data-testid="select-project-type"
                             >
                               <SelectValue placeholder="Select a project type" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="bg-[#020617] border-[#27272f]">
-                            <SelectItem value="web-development">
-                              Web Development
+                          <SelectContent className="bg-[#020617] border-[#27272f] text-slate-50">
+                            <SelectItem value="web_design">
+                              Web Design
                             </SelectItem>
-                            <SelectItem value="ui-ux-design">
-                              UI/UX Design
+                            <SelectItem value="web_app">
+                              Web Application
                             </SelectItem>
-                            <SelectItem value="e-commerce">
-                              E-commerce
-                            </SelectItem>
-                            <SelectItem value="mobile-app">
-                              Mobile App
-                            </SelectItem>
-                            <SelectItem value="branding">
-                              Branding
-                            </SelectItem>
+                            <SelectItem value="branding">Branding</SelectItem>
+                            <SelectItem value="ui_ux">UI/UX Design</SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
@@ -199,12 +194,12 @@ export function ContactSection() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-slate-200">
-                          Message
+                          Project Details
                         </FormLabel>
                         <FormControl>
                           <Textarea
-                            placeholder="Tell us about your project..."
-                            className="min-h-32 resize-none bg-[#020617] border-[#27272f] text-slate-50 placeholder:text-slate-500 focus:border-[#7C3AED] focus:ring-[#7C3AED]/60"
+                            className="bg-[#020617] border-[#27272f] text-slate-50 placeholder:text-slate-500 focus:border-[#7C3AED] focus:ring-[#7C3AED]/60 min-h-[140px]"
+                            placeholder="Tell us about your project, timeline, and goals..."
                             {...field}
                             data-testid="input-message"
                           />
@@ -214,145 +209,121 @@ export function ContactSection() {
                     )}
                   />
 
-                  {mutation.isPending && (
-                    <Alert
-                      className="bg-violet-500/10 border-violet-500/40"
-                      data-testid="alert-loading"
+                  <div className="space-y-3 pt-2">
+                    <Button
+                      type="submit"
+                      className="w-full inline-flex items-center justify-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-medium py-5 rounded-2xl text-sm md:text-base shadow-[0_18px_40px_rgba(124,58,237,0.45)]"
+                      disabled={mutation.isPending}
+                      data-testid="btn-submit"
                     >
-                      <Loader2 className="h-4 w-4 animate-spin text-violet-300" />
-                      <AlertDescription className="text-slate-100">
-                        Sending your message...
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                      {mutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Sending message...
+                        </>
+                      ) : (
+                        <>Send message</>
+                      )}
+                    </Button>
 
-                  {isSubmitted && !mutation.isPending && (
-                    <Alert
-                      className="bg-emerald-500/10 border-emerald-500/40"
-                      data-testid="alert-success"
-                    >
-                      <CheckCircle2 className="h-4 w-4 text-emerald-300" />
-                      <AlertDescription className="text-slate-100">
-                        Message sent successfully! We&apos;ll get back to you
-                        within 24 hours.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {submitError && !mutation.isPending && (
-                    <Alert
-                      variant="destructive"
-                      data-testid="alert-error"
-                      className="border-red-500/40 bg-red-900/40"
-                    >
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{submitError}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  <Button
-                    type="submit"
-                    className="w-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-medium"
-                    disabled={mutation.isPending}
-                    data-testid="button-submit-contact"
-                  >
-                    {mutation.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isSubmitted && !submitError && (
+                      <Alert
+                        variant="default"
+                        className="border-emerald-500/40 bg-emerald-900/40"
+                        data-testid="alert-success"
+                      >
+                        <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                        <AlertDescription className="text-slate-100">
+                          Message sent successfully! We&apos;ll get back to you
+                          within 24 hours.
+                        </AlertDescription>
+                      </Alert>
                     )}
-                    {mutation.isPending ? "Sending..." : "Send Message"}
-                  </Button>
+
+                    {submitError && !mutation.isPending && (
+                      <Alert
+                        variant="destructive"
+                        data-testid="alert-error"
+                        className="border-red-500/40 bg-red-900/40"
+                      >
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{submitError}</AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
                 </form>
               </Form>
             </div>
           </Card>
 
-          {/* Contact info panel + hours */}
-          <div className="space-y-6">
-            <Card className="rounded-3xl border border-[#27272f] bg-gradient-to-br from-[#111827] via-[#020617] to-[#020617] p-6 md:p-7">
-              <h3 className="text-xl md:text-2xl font-display font-semibold mb-5">
-                Contact Information
-              </h3>
-              <div className="space-y-5 text-sm">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#7C3AED]/20 text-[#C4B5FD]">
-                    <Mail className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">Email</div>
-                    <a
-                      href="mailto:hello@webdesigno.com"
-                      className="text-slate-400 hover:text-slate-100 transition-colors"
-                      data-testid="link-email"
-                    >
-                      hello@webdesigno.com
-                    </a>
-                  </div>
+          {/* Contact info / sidebar */}
+          <div className="space-y-6 lg:space-y-8">
+            <Card className="rounded-3xl border border-[#18181b] bg-gradient-to-b from-[#020617] to-[#020617]/90">
+              <div className="p-6 md:p-8 space-y-6">
+                <div>
+                  <h3 className="text-xl md:text-2xl font-semibold mb-2">
+                    Prefer to talk directly?
+                  </h3>
+                  <p className="text-sm md:text-base text-slate-400">
+                    Reach out through any of these channels and we&apos;ll
+                    respond as soon as possible.
+                  </p>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#7C3AED]/20 text-[#C4B5FD]">
-                    <Phone className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">Phone</div>
-                    <a
-                      href="tel:+1234567890"
-                      className="text-slate-400 hover:text-slate-100 transition-colors"
-                      data-testid="link-phone"
-                    >
-                      +1 (234) 567-890
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[#7C3AED]/20 text-[#C4B5FD]">
-                    <MapPin className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <div className="font-medium mb-1">Office</div>
-                    <p className="text-slate-400">
-                      123 Design Street
-                      <br />
-                      San Francisco, CA 94102
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="rounded-3xl border border-[#27272f] bg-[#020617]/95 p-6 space-y-5">
-              <div>
-                <h4 className="font-medium mb-2 text-sm md:text-base">
-                  Office Hours
-                </h4>
-                <p className="text-xs md:text-sm text-slate-400">
-                  Monday - Friday: 9:00 AM - 6:00 PM PST
-                  <br />
-                  Saturday: 10:00 AM - 4:00 PM PST
-                  <br />
-                  Sunday: Closed
-                </p>
-              </div>
-
-              <div className="border-t border-[#27272f] pt-4">
-                <h4 className="font-medium mb-3 text-sm md:text-base">
-                  Follow Us
-                </h4>
-                <div className="flex flex-wrap gap-4 text-xs md:text-sm">
-                  {["LinkedIn", "Twitter", "Instagram", "Dribbble"].map(
-                    (social, index) => (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-2xl bg-[#111827] flex items-center justify-center">
+                      <Mail className="h-5 w-5 text-[#7C3AED]" />
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-400">
+                        Email
+                      </div>
                       <a
-                        key={index}
-                        href="#"
-                        className="text-slate-400 hover:text-slate-100 transition-colors"
-                        data-testid={`link-social-${social.toLowerCase()}`}
+                        href="mailto:hello@webdesigno.com"
+                        className="text-sm md:text-base text-slate-100 hover:text-[#A855F7]"
                       >
-                        {social}
+                        hello@webdesigno.com
                       </a>
-                    )
-                  )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-2xl bg-[#111827] flex items-center justify-center">
+                      <Phone className="h-5 w-5 text-[#7C3AED]" />
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-400">
+                        Phone
+                      </div>
+                      <a
+                        href="tel:+1234567890"
+                        className="text-sm md:text-base text-slate-100 hover:text-[#A855F7]"
+                      >
+                        +1 (234) 567-890
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="h-10 w-10 rounded-2xl bg-[#111827] flex items-center justify-center">
+                      <MapPin className="h-5 w-5 text-[#7C3AED]" />
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-slate-400">
+                        Location
+                      </div>
+                      <div className="text-sm md:text-base text-slate-100">
+                        Remote • Worldwide
+                      </div>
+                    </div>
+                  </div>
                 </div>
+
+                <p className="text-xs md:text-sm text-slate-500">
+                  This contact form is for demonstration purposes only. No data
+                  is stored or sent to a server.
+                </p>
               </div>
             </Card>
           </div>
